@@ -1,0 +1,13 @@
+# <type>: <imperative summary, no trailing full stop>
+#
+# <body: what changed and why. Optional for trivial changes.
+#   * one line per change, no indent
+#     - detail of that change, 2-space indent; one level of nesting at most
+#   Wrap at 100 columns; continuation lines align with the text after the bullet.>
+#
+# <optional trailers, e.g.>
+# Refs: #123
+#
+# Types: feat | fix | refactor | perf | docs | test | build | ci | chore | style | revert
+# Append '!' after the type for breaking changes, e.g. feat!: drop v1 endpoints
+# Subject: max 72 characters. Second line blank.

@@ -1,0 +1,33 @@
+{
+  "$comment": "AI plan workflow configuration. Paths are relative to the workspace root (the folder containing CLAUDE.md).",
+
+  "plansDir": "plans",
+  "archiveDir": "plans/archive",
+  "stateDir": ".claude/state",
+
+  "$comment_archivePrefix": "Tokens: YYYY MM DD HH mm ss (local time). Prepended to the plan file name on archival.",
+  "archivePrefixFormat": "YYYYMMDD-HHmmss_",
+
+  "archive": {
+    "$comment": "allowUnlistedByDefault: true lets complete and archival proceed when a worktree has uncommitted changes that no active plan lists in Files Affected (they are left uncommitted and recorded). Changes listed by another active plan never block. false (default) stops until --allow-unlisted is passed.",
+    "allowUnlistedByDefault": false
+  },
+
+  "repositories": {
+    "$comment": "autoDiscover: every immediate sub-folder of the root containing .git (a git worktree or clone) is a worktree, named after the folder and used in ### <worktree> headings. includeRoot: the root itself, if it is a git repo, is named rootName. map: explicit extra/override entries { name: relative/path }.",
+    "autoDiscover": true,
+    "includeRoot": false,
+    "rootName": "root",
+    "map": {}
+  },
+
+  "commit": {
+    "$comment": "Every commit message in a plan is validated against these rules. templateFile is shown to the AI when writing messages.",
+    "templateFile": ".claude/workflow/commit-template.txt",
+    "subjectPattern": "^(feat|fix|refactor|perf|docs|test|build|ci|chore|style|revert)!?: \\S.*$",
+    "maxSubjectLength": 72,
+    "maxBodyLineLength": 100,
+    "blankLineAfterSubject": true,
+    "requiredTrailers": []
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "name": "plan-workflow-ui",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Local web UI for the AI plan workflow: plan board, human gates and headless Claude Code phase runs.",
+  "type": "module",
+  "engines": { "node": ">=18" },
+  "scripts": {
+    "start": "node server.mjs",
+    "test": "node --test \"test/*.test.mjs\""
+  }
+}

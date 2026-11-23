@@ -1,0 +1,4 @@
+plans/*
+!plans/archive/
+plans/archive/*
+!plans/archive/.gitkeep
