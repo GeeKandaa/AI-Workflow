@@ -17,6 +17,8 @@ The human accepted plan `$ARGUMENTS` and has run `archive-begin` (the archive lo
    - Otherwise update the other plan so it no longer expects to commit what this plan commits, and explain the
      decision in both plans' `## AI Feedback`.
 4. Run `node .claude/workflow/plan.mjs archive-finish $ARGUMENTS --plans-reviewed`.
-5. Report the archive path, the plans you updated (and how), and the Archive Record it printed.
+5. Report the archive path, the plans you updated (and how), and the Archive Record it printed. End your reply
+   with the `FINAL COMMIT(S)` block that `archive-finish` printed last: every commit's full hash and its message,
+   copied exactly, under a "Final commit" heading.
    If `archive-finish` refuses before a commit was made, run `archive-abort $ARGUMENTS`, relay its output to the
    human, and stop.

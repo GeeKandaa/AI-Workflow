@@ -249,6 +249,9 @@ test('several plans per worktree: overlap gating, ownership and whole-file archi
     assert.equal(finish.status, 0, finish.stdout + finish.stderr);
     assert.deepEqual(w.git('show', '--name-only', '--format=', 'HEAD').split('\n'), ['c.txt']);
     assert.equal(w.git('log', '-1', '--format=%s'), 'feat: p3');
+    // The output ends with the final commit's full hash and message.
+    const tail = finish.stdout.trimEnd().split(/\r?\n/).slice(-3);
+    assert.deepEqual(tail, ['FINAL COMMIT (hash and message):', `- wt: ${w.git('rev-parse', 'HEAD')}`, '    feat: p3']);
     assert.equal(w.git('status', '--porcelain'), 'M a.txt'); // p1's work is untouched (helper trims the leading space)
     assert.equal(fs.readdirSync(path.join(w.root, 'plans', 'archive')).filter((f) => f.endsWith('_p3.md')).length, 1);
 

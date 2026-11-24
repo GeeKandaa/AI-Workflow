@@ -101,6 +101,26 @@ function printValidation(v, label = 'Validation') {
   if (v.errors.length) { out(`${label} failed:`); for (const e of v.errors) out(`  - ${e}`); }
 }
 
+/**
+ * The closing block of archive-finish: each commit the plan records, with its full hash and message as git has
+ * them. Entries look like "repo#1 <sha> subject" (auto) or "repo#manual <sha>" (manual).
+ */
+function finalCommits(commits) {
+  const repos = L.repositories();
+  const lines = [];
+  for (const c of commits) {
+    const m = /^([^#\s]+)#\S+ (\S+)/.exec(c);
+    if (!m || !/^[0-9a-f]{7,64}$/i.test(m[2])) { lines.push(`- ${m ? m[1] : c}: no commit recorded`); continue; }
+    const r = repos[m[1]] ? L.git(repos[m[1]], ['log', '-1', '--format=%H%n%B', m[2]]) : { code: 1 };
+    if (r.code !== 0) { lines.push(`- ${m[1]}: ${m[2]} (message not found in git)`); continue; }
+    const [sha, ...msg] = r.out.trim().split(/\r?\n/);
+    const body = msg.join('\n').trim();
+    lines.push(`- ${m[1]}: ${sha}`, ...body.split('\n').map((l) => `    ${l}`.trimEnd()));
+  }
+  const n = commits.length;
+  return [`FINAL COMMIT${n === 1 ? '' : 'S'} (hash and message):`, ...(lines.length ? lines : ['- none'])].join('\n');
+}
+
 function feedbackEntry(plan, text) {
   const sections = L.splitSections(plan.body);
   let fb = sections.find((s) => L.sectionKind(s.title) === 'feedback');
@@ -669,6 +689,7 @@ const commands = {
     out(record.trimEnd());
     if (lock.manualCommit) for (const c of p.fm.commits) if (c.endsWith(` ${L.MISSING}`))
       out(`\nNote: the plan records no commit for ${c.split('#')[0]}; its changes are whatever is committed by hand (or not).`);
+    out(`\n${finalCommits(p.fm.commits || [])}`);
   },
 
   'archive-abort'([ref]) {
