@@ -42,6 +42,9 @@ Requirements: Node.js 18+, git, and Claude Code (`claude`) on `PATH`, signed in.
   awaiting a decision, shared files, running phases and archival in progress. Updates arrive live: the server
   watches the workspace's `plans/` and `.claude/state/` folders, and also polls.
 - **Plan detail.** The rendered plan, plus its attempt, worktrees, branches, overlaps, history and runs.
+- **Getting around.** Each page links back up a level (session → plan → board → workspaces) and, on the right,
+  forward: a plan to its last-opened and latest session, the board to the last-opened and latest plan. What was
+  last opened is remembered per browser.
 - **Deviations.** *Approve deviation…* shows the deviation in full, lists its numbered options to choose from, and
   takes notes or conditions. The choice is recorded in the plan (`continue --decision`), and the continue phase
   follows it over the AI's own recommendation. Older workspaces need a redeploy for the choice to be recorded.

@@ -85,3 +85,8 @@ dialog::backdrop { background: rgba(0,0,0,.35); }
 #toast { position: fixed; bottom: 16px; right: 16px; max-width: 520px; display: none; white-space: pre-wrap;
   background: var(--panel); border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; box-shadow: 0 4px 16px rgba(0,0,0,.2); }
 #toast.show { display: block; } #toast.error { border-color: var(--danger); }
+
+/* Breadcrumbs: back link on the left, forward links on the right. */
+.crumbs { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 4px 16px; margin: 1em 0; }
+.crumbs .forward { display: flex; flex-wrap: wrap; gap: 4px 16px; margin-left: auto; min-width: 0; }
+.crumbs a { overflow-wrap: anywhere; }

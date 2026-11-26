@@ -13,6 +13,30 @@ const STATUSES = ['planning', 'staged', 'confirmation'];
 function localStorageGet(k) { try { return localStorage.getItem(`planui.${k}`); } catch { return null; } }
 function localStorageSet(k, v) { try { localStorage.setItem(`planui.${k}`, v); } catch {} }
 
+// --- breadcrumbs: ← up one level, → forward to the last opened or latest item one level down -------------------------
+
+// Remembered in this browser only; everything falls back to the latest item without it.
+const lastPlanKey = (wsId) => `lastPlan.${wsId}`;
+const lastRunKey = (wsId, plan) => `lastRun.${wsId}.${plan}`;
+function rememberOpened(wsId, plan, run = null) {
+  if (!plan) return;
+  localStorageSet(lastPlanKey(wsId), plan);
+  if (run) localStorageSet(lastRunKey(wsId, plan), run);
+}
+
+/**
+ * Forward links, from items newest first as [{ id, href, label }]. The last opened one if it still exists, plus the
+ * latest when that is a different one; just the latest when none has been opened.
+ */
+function forwardLinks(items, lastId) {
+  const latest = items[0];
+  if (!latest) return '';
+  const last = items.find((x) => x.id === lastId);
+  const link = (x, what) => `<a href="${esc(x.href)}" title="${esc(what)}"><span class="muted">${esc(what)}:</span> ${esc(x.label)} →</a>`;
+  return [last && last !== latest ? link(last, 'Last opened') : '', link(latest, last === latest ? 'Last opened' : 'Latest')].filter(Boolean).join('');
+}
+const crumbs = (back, forward) => `<nav class="crumbs small" aria-label="Breadcrumbs"><span>${back}</span><span class="forward">${forward}</span></nav>`;
+
 // --- API ------------------------------------------------------------------------------------------------------------
 
 async function api(method, url, body) {
@@ -174,6 +198,10 @@ function viewBoard() {
     </a>`;
   $app.innerHTML = `
     <div id="health">${state.health && !state.health.ok ? `<div class="banner error" style="margin-bottom:12px">${esc(state.health.error)}</div>` : ''}</div>
+    ${crumbs('<a href="#/">← Workspaces</a>', forwardLinks([
+      ...status.plans.slice().sort((a, b) => String(b.updated || '').localeCompare(String(a.updated || ''))).map((p) => ({ id: p.name, label: p.title })),
+      ...archived.slice().reverse().map((a) => ({ id: a.id, label: `${a.title} (archived)` })),
+    ].map((x) => ({ ...x, href: `#/ws/${w.id}/plan/${x.id}` })), localStorageGet(lastPlanKey(w.id))))}
     <div class="row"><h1>${esc(w.name)}</h1><span class="muted small">${esc(w.path)}</span></div>
     <div class="panel" style="margin:12px 0">
       <form id="new-plan" class="stack">
@@ -242,6 +270,7 @@ async function viewPlan(r) {
   try { [doc, runs] = await Promise.all([api('GET', `/api/ws/${w.id}/plans/${r.plan}`), api('GET', `/api/ws/${w.id}/runs?plan=${encodeURIComponent(r.plan)}`)]); }
   catch (err) { $app.innerHTML = `<div class="banner error">${esc(err.message)}</div>`; return; }
   if (parseHash().plan !== r.plan) return; // navigated away while loading
+  rememberOpened(w.id, r.plan);
   const running = runs.find((x) => x.status === 'running');
   const locked = state.snap?.status.lock;
   const status = p ? p.status : 'archived';
@@ -255,7 +284,8 @@ async function viewPlan(r) {
   const restore = keepDrafts();
 
   $app.innerHTML = `
-    <p class="small"><a href="#/ws/${esc(w.id)}">← ${esc(w.name)}</a></p>
+    ${crumbs(`<a href="#/ws/${esc(w.id)}">← ${esc(w.name)}</a>`, forwardLinks(runs.map((x) => ({ id: x.id, href: `#/ws/${w.id}/run/${x.id}`,
+      label: `${x.parentRunId ? `reply (${x.phase})` : x.phase}${x.status === 'running' ? ' (running)' : ''}` })), localStorageGet(lastRunKey(w.id, r.plan))))}
     <div class="row"><h1>${esc(p?.title || r.plan)}</h1><span class="badge ${esc(status)}">${esc(status)}</span>
       ${running ? `<a class="badge running" href="#/ws/${esc(w.id)}/run/${esc(running.id)}">${esc(running.phase)} running</a>` : ''}</div>
     <p class="muted small">${esc(doc.file)}</p>
@@ -455,6 +485,7 @@ async function viewRun(r) {
   if (!w) { location.hash = '#/'; return; }
   let meta;
   try { meta = await api('GET', `/api/ws/${w.id}/runs/${r.run}`); } catch (err) { $app.innerHTML = `<div class="banner error">${esc(err.message)}</div>`; return; }
+  rememberOpened(w.id, meta.plan, meta.id);
   $app.innerHTML = `<div class="run-view"><div class="run-head">
     <p class="small">${meta.plan ? `<a href="#/ws/${esc(w.id)}/plan/${esc(meta.plan)}">← ${esc(meta.plan)}</a>` : `<a href="#/ws/${esc(w.id)}">← ${esc(w.name)}</a>`}</p>
     <div class="row"><h1>${esc(meta.parentRunId ? `reply · ${meta.phase}` : meta.phase)}${meta.plan ? ` · ${esc(meta.plan)}` : ''}</h1><span id="run-status" class="badge ${esc(meta.status)}">${esc(meta.status)}</span>
@@ -505,6 +536,7 @@ async function viewRun(r) {
     try {
       const m = await api('GET', `/api/ws/${w.id}/runs/${meta.id}`);
       const s = document.getElementById('run-status'); if (!s) return;
+      rememberOpened(w.id, m.plan, m.id); // a plan-new run only learns its plan while it runs
       s.textContent = m.status; s.className = `badge ${m.status}`;
       document.getElementById('stop').hidden = true;
       document.getElementById('problems').innerHTML = problemsHtml(m);
